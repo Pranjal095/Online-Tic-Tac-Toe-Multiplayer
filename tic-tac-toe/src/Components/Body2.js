@@ -33,16 +33,19 @@ const Body2=({ username, socket })=>{
       }
     }
 
+    //if first player wins
     if(checkWin(1)){
       setPlayerTurn("Team Cross wins!");
       setIsMatchOver(true);
     }
 
+    //if second player wins
     else if(checkWin(2)){
       setPlayerTurn("Team Circle wins!");
       setIsMatchOver(true);
     }
 
+    //if it's a draw
     else if(moveNum===9){
       setPlayerTurn("It's a draw!");
       setIsMatchOver(true);
@@ -62,6 +65,7 @@ const Body2=({ username, socket })=>{
       setRoomname(data.roomname);
       setGrid(data.gamegrid);
       setMoveNum(data.moveNum);
+      setIsMatchOver(data.isMatchOver);
     })
 
     socket.on('memberResponse',(data)=>setUsers(data));
@@ -107,7 +111,7 @@ const Body2=({ username, socket })=>{
     }
     else{
       //check whether user is making a valid move
-      if(circles.some((circleMember)=>circleMember.username === username) && !grid[row][col]){
+      if(circles.some((circleMember)=>circleMember.username === username) && !grid[row][col] && !isMatchOver){
         const newGrid=[...grid];
         newGrid[row][col]=2;
         socket.emit("newMove",{ roomID: roomID, gamegrid: newGrid, moveNum: moveNum+1, isMatchOver: isMatchOver });

@@ -22,7 +22,7 @@ const gameRoomSchema=new mongoose.Schema({
     required: true
   },
 
-  isMatchWon:{
+  isMatchOver:{
     type: Boolean,
     required: true
   }

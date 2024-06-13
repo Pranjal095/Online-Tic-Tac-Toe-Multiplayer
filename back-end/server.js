@@ -34,11 +34,11 @@ socketIO.on('connection',(socket)=>{
       roomname: data.roomname,
       gamegrid: [[0,0,0],[0,0,0],[0,0,0]],
       moveNum: 0,
-      isMatchWon: false
+      isMatchOver: false
     })
 
     await room.save();
-    socket.emit('joinResponse',{ roomname: room.roomname, gamegrid: room.gamegrid, moveNum: room.moveNum })
+    socket.emit('joinResponse',{ roomname: room.roomname, gamegrid: room.gamegrid, moveNum: room.moveNum, isMatchOver: room.isMatchOver })
 
     //add to array of users present in rooms
     members.push( { username: data.username, roomID: room.roomID, socketID: data.socketID });
@@ -52,7 +52,7 @@ socketIO.on('connection',(socket)=>{
       socketIO.emit('joinResponse',{ error: "Room with given ID does not exist."});
     }
 
-    socket.emit('joinResponse',{ roomname: existingRoom.roomname, gamegrid: existingRoom.gamegrid, moveNum: existingRoom.moveNum, isMatchWon: existingRoom.isMatchWon });
+    socket.emit('joinResponse',{ roomname: existingRoom.roomname, gamegrid: existingRoom.gamegrid, moveNum: existingRoom.moveNum, isMatchOver: existingRoom.isMatchOver });
 
     //add to array of users present in rooms
     members.push({ username: data.username, roomID: existingRoom.roomID, socketID: data.socketID });
@@ -64,10 +64,15 @@ socketIO.on('connection',(socket)=>{
     
     existingRoom.gamegrid=data.gamegrid;
     existingRoom.moveNum=data.moveNum;
-    existingRoom.isMatchWon=data.isMatchWon;
+    existingRoom.isMatchOver=data.isMatchOver;
     await existingRoom.save();
 
-    socketIO.emit('gridUpdate',{ roomID: existingRoom.roomID, gamegrid: existingRoom.gamegrid, moveNum: existingRoom.moveNum, isMatchWon: existingRoom.isMatchWon });
+    socketIO.emit('gridUpdate',{ roomID: existingRoom.roomID, gamegrid: existingRoom.gamegrid, moveNum: existingRoom.moveNum, isMatchOver: existingRoom.isMatchOver });
+  })
+
+  socket.on('leaveResponse',()=>{
+    members=members.filter((user)=>user.socketID !== socket.id);
+    socketIO.emit('memberResponse',members);
   })
 
   socket.on('disconnect',()=>{
