@@ -1,5 +1,22 @@
 const mongoose=require('mongoose');
 
+const memberInfoSchema=new mongoose.Schema({
+  username:{
+    type: String,
+    required: true
+  },
+
+  socketID:{
+    type: String,
+    required: true
+  },
+
+  teamName:{
+    type: String,
+    required: true
+  }
+})
+
 //defining the schema and model for the gameroom collection
 const gameRoomSchema=new mongoose.Schema({
   roomID:{
@@ -24,6 +41,16 @@ const gameRoomSchema=new mongoose.Schema({
 
   isMatchOver:{
     type: Boolean,
+    required: true
+  },
+
+  members:{
+    type: [memberInfoSchema],
+    required: true
+  },
+
+  displayMessage:{
+    type: String,
     required: true
   }
 })

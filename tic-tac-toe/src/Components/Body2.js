@@ -7,130 +7,47 @@ import circleIcon from '../tic-tac-toe-circle.png';
 import { useState, useEffect } from "react";
 
 const Body2=({ username, socket })=>{
-  const [moveNum,setMoveNum]=useState(0);
-  const [playerTurn,setPlayerTurn]=useState("Turn belongs to Team Cross");
+  const [display,setDisplay]=useState("Turn belongs to Team Cross");
   const [grid,setGrid]=useState([[0,0,0],[0,0,0],[0,0,0]]);
   const [roomname,setRoomname]=useState("");
   const [isMatchOver,setIsMatchOver]=useState(false);
-  let [users,setUsers]=useState([]);
-
-  //array of members who are in Team Cross
-  let crosses=[];
-  //array of members who are in Team Circle
-  let circles=[];
 
   //get the roomID using the current webpage url
   const URL=window.location.href;
   const roomID=URL.split("/")[4];
 
   useEffect(()=>{
-    const checkWin=(value)=>{
-      if ((grid[0][0] === value && grid[1][1] === value && grid[2][2] === value) || (grid[0][2] === value && grid[1][1] === value && grid[2][0] === value) || (grid[0][0] === value && grid[0][1] === value && grid[0][2] === value) || (grid[1][0] === value && grid[1][1] === value && grid[1][2] === value) || (grid[2][0] === value && grid[2][1] === value && grid[2][2] === value) || (grid[0][0] === value && grid[1][0] === value && grid[2][0] === value) || (grid[0][1] === value && grid[1][1] === value && grid[2][1] === value) || (grid[0][2] === value && grid[1][2] === value && grid[2][2] === value)){
-        return true;
-      }
-      else{
-        return false;
-      }
-    }
-
-    //if first player wins
-    if(checkWin(1)){
-      setPlayerTurn("Team Cross wins!");
-      setIsMatchOver(true);
-    }
-
-    //if second player wins
-    else if(checkWin(2)){
-      setPlayerTurn("Team Circle wins!");
-      setIsMatchOver(true);
-    }
-
-    //if it's a draw
-    else if(moveNum===9){
-      setPlayerTurn("It's a draw!");
-      setIsMatchOver(true);
-    }
-
-    else{
-      //deciding the turn based on moveNum
-      if(moveNum%2 === 0){
-        setPlayerTurn("Turn belongs to Team Cross");
-      }
-      else{
-        setPlayerTurn("Turn belongs to Team Circle");
-      }
-    }
-
     socket.on('joinResponse',(data)=>{
       setRoomname(data.roomname);
       setGrid(data.gamegrid);
-      setMoveNum(data.moveNum);
       setIsMatchOver(data.isMatchOver);
+      setDisplay(data.displayMessage);
     })
-
-    socket.on('memberResponse',(data)=>setUsers(data));
 
     socket.on('gridUpdate',(data)=>{
       if(data.roomID===roomID){
+        console.log(data);
         setGrid(data.gamegrid);
-        setMoveNum(data.moveNum);
         setIsMatchOver(data.isMatchOver);
+        setDisplay(data.displayMessage);
       }
     })
-  },[socket,roomID,moveNum,grid])
-
-  //access only those users which are in the same group
-  users=users.filter((user)=>user.roomID === roomID);
-  crosses=users.filter((crossMember,index)=>index%2 === 0);
-  circles=users.filter((circleMember,index)=>index%2 !== 0);
+  },[socket,roomID])
   
   const navigate=useNavigate();
 
   const leaveChat=()=>{
-    socket.emit('leaveResponse');
+    socket.emit('leaveResponse',{ roomID: roomID });
     navigate("/");
   }
 
   const handleClick=(row,col)=>{
-    if(moveNum%2 === 0){
-      //check whether user is making a valid move
-      if(crosses.some((crossMember)=>crossMember.username === username) && !grid[row][col] && !isMatchOver){
-        const newGrid=[...grid];
-        newGrid[row][col]=1;
-        socket.emit("newMove",{ roomID: roomID, gamegrid: newGrid, moveNum: moveNum+1, isMatchOver: isMatchOver });
-      }
-      else if(isMatchOver){
-        setPlayerTurn("Match is over! Reset the grid to start a new one...");
-      }
-      else if(grid[row][col]){
-        setPlayerTurn("Pick a blank square...");
-      }
-      else{
-        setPlayerTurn("Wait for your turn...");
-      }
-    }
-    else{
-      //check whether user is making a valid move
-      if(circles.some((circleMember)=>circleMember.username === username) && !grid[row][col] && !isMatchOver){
-        const newGrid=[...grid];
-        newGrid[row][col]=2;
-        socket.emit("newMove",{ roomID: roomID, gamegrid: newGrid, moveNum: moveNum+1, isMatchOver: isMatchOver });
-      }
-      else if(isMatchOver){
-        setPlayerTurn("Match is over! Reset the grid to start a new one...");
-      }
-      else if(grid[row][col]){
-        setPlayerTurn("Pick a blank square...");
-      }
-      else{
-        setPlayerTurn("Wait for your turn...");
-      }
-    }
+    socket.emit("newMove",{ roomID: roomID, rowNum: row, colNum: col, toReset: false, socketID: socket.id });
+    console.log(socket.id);
   }
 
   const resetGrid=()=>{
-    const newGrid=[[0,0,0],[0,0,0],[0,0,0]];
-    socket.emit("newMove",{ roomID: roomID, gamegrid: newGrid, moveNum: 0, isMatchOver: false });
+    socket.emit("newMove",{ roomID: roomID, toReset: true, socketID: socket.id });
   }
 
   return(
@@ -142,7 +59,7 @@ const Body2=({ username, socket })=>{
         </button>
       </header>
 
-      <h3 className="turn">{playerTurn}</h3>
+      <h3 className="turn">{display}</h3>
       {
         isMatchOver ?
         <button className="reset" onClick={resetGrid}>RESET GRID</button>

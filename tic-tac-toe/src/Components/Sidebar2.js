@@ -5,16 +5,17 @@ import { useState,useEffect } from 'react';
 const Sidebar2=({ socket, username })=>{
   let [users,setUsers]=useState([]);
 
-  useEffect(()=>{
-    socket.on('memberResponse',(data)=>setUsers(data));
-  },[socket,users]);
-
   //get the roomID using the current webpage url
   const URL=window.location.href;
   const roomID=URL.split("/")[4];
 
-  //access only those users which are in the same group
-  users=users.filter((user)=>user.roomID === roomID);
+  useEffect(()=>{
+    socket.on('memberResponse',(data)=>{
+      if(data.roomID===roomID){
+        setUsers(data.members)
+      }
+    });
+  },[socket,users,roomID]);
 
   return(
     <div className="sidebar-container">
@@ -22,10 +23,10 @@ const Sidebar2=({ socket, username })=>{
       <h3 className="sidebar-heading">{username}</h3>
       <h3 className="online-heading">Members Online:</h3>
       <div className="online-members">
-        {users.map((user,index)=>(
+        {users.map((user)=>(
           <p key={user.socketID}>
             {
-              index%2 === 0 ?
+              user.teamName === "Cross" ?
               user.username+": Team Cross"
               :
               user.username+": Team Circle"
