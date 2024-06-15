@@ -49,7 +49,7 @@ socketIO.on('connection',(socket)=>{
       socketIO.emit('joinResponse',{ error: "Room with given ID does not exist."});
     }
 
-    existingRoom.members.push({ username: data.username, socketID: data.socketID, teamName: existingRoom.members.length%2 ? "Circle" : "Cross" })
+    existingRoom.members.push({ username: data.username, socketID: data.socketID, teamName: existingRoom.members[existingRoom.members.length-1].teamName==="Cross" ? "Circle" : "Cross" })
 
     await existingRoom.save();
 
